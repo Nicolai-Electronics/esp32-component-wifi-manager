@@ -106,11 +106,6 @@ esp_err_t wifi_connection_connect(uint16_t index, uint8_t max_retries) {
 
     switch (settings.authmode) {
         case WIFI_AUTH_ENTERPRISE:
-        case WIFI_AUTH_WPA3_PSK:
-        case WIFI_AUTH_WPA2_WPA3_PSK:
-        case WIFI_AUTH_WPA3_ENT_192:
-        case WIFI_AUTH_WPA3_EXT_PSK:
-        case WIFI_AUTH_WPA3_EXT_PSK_MIXED_MODE:
         case WIFI_AUTH_WPA3_ENTERPRISE:
         case WIFI_AUTH_WPA2_WPA3_ENTERPRISE:
             use_eap = true;
