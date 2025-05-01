@@ -117,12 +117,15 @@ esp_err_t wifi_connection_connect(uint16_t index, uint8_t max_retries) {
 
 #ifndef CONFIG_IDF_TARGET_ESP32P4
     if (use_eap) {
-        ESP_RETURN_ON_ERROR(esp_eap_client_set_identity(settings.identity, strnlen((char*)settings.identity, 128)), TAG,
-                            "Failed to set identity");
-        ESP_RETURN_ON_ERROR(esp_eap_client_set_username(settings.username, strnlen((char*)settings.username, 128)), TAG,
-                            "Failed to set username");
-        ESP_RETURN_ON_ERROR(esp_eap_client_set_password(settings.password, strnlen((char*)settings.password, 64)), TAG,
-                            "Failed to set password");
+        ESP_RETURN_ON_ERROR(
+            esp_eap_client_set_identity((unsigned char*)settings.identity, strnlen((char*)settings.identity, 128)), TAG,
+            "Failed to set identity");
+        ESP_RETURN_ON_ERROR(
+            esp_eap_client_set_username((unsigned char*)settings.username, strnlen((char*)settings.username, 128)), TAG,
+            "Failed to set username");
+        ESP_RETURN_ON_ERROR(
+            esp_eap_client_set_password((unsigned char*)settings.password, strnlen((char*)settings.password, 64)), TAG,
+            "Failed to set password");
         ESP_RETURN_ON_ERROR(esp_eap_client_set_ttls_phase2_method(settings.phase2), TAG, "Failed to set phase2 method");
         ESP_RETURN_ON_ERROR(esp_wifi_sta_enterprise_enable(), TAG, "Failed to enable enterprise mode");
     } else {
