@@ -194,14 +194,14 @@ esp_netif_ip_info_t* wifi_get_ip_info(void) {
 }
 
 esp_err_t wifi_connect_try_all(void) {
-    for (uint16_t index = 0; index < WIFI_SETTINGS_MAX; index++) {
-        if (wifi_connection_connect(index, 3) == ESP_OK) {
-            ESP_LOGI(TAG, "Connecting to network in slot %" PRIu32, index);
-            if (wifi_connection_await(500)) {
-                return ESP_OK;
+    for (uint8_t timeout = 0; timeout < 3; timeout++) {
+        for (uint16_t index = 0; index < WIFI_SETTINGS_MAX; index++) {
+            if (wifi_connection_connect(index, 1) == ESP_OK) {
+                ESP_LOGI(TAG, "Connecting to network in slot %" PRIu32, index);
+                if (wifi_connection_await(1000)) {
+                    return ESP_OK;
+                }
             }
-        } else {
-            ESP_LOGI(TAG, "No network stored in slot %" PRIu32, index);
         }
     }
     ESP_LOGE(TAG, "Tried all stored networks, unable to connect");
