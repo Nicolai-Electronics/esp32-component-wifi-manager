@@ -3,6 +3,10 @@
 #include "esp_err.h"
 #include "esp_wifi_types_generic.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define WIFI_SETTINGS_MAX 0xFF
 
 typedef struct {
@@ -21,3 +25,8 @@ esp_err_t wifi_settings_get(uint8_t index, wifi_settings_t* out_settings);
 esp_err_t wifi_settings_set(uint8_t index, wifi_settings_t* settings);
 esp_err_t wifi_settings_erase(uint8_t index);
 int       wifi_settings_find_empty_slot(void);
+
+#ifdef __cplusplus
+}
+#endif
+
