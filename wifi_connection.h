@@ -7,7 +7,7 @@
 
 #define WIFI_INFINITE_RETRIES 255
 
-void                 wifi_connection_init_stack(void);
+esp_err_t            wifi_connection_init_stack(void);
 esp_err_t            wifi_connection_connect(uint16_t index, uint8_t max_retries);
 void                 wifi_connection_disconnect(void);
 bool                 wifi_connection_await(uint64_t max_delay_millis);

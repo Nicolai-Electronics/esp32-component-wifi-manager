@@ -91,16 +91,34 @@ static void wifi_connection_init_internal(void) {
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, ESP_EVENT_ANY_ID, &event_handler, (void*)netif));
 }
 
-void wifi_connection_init_stack(void) {
-    ESP_ERROR_CHECK(esp_netif_init());
-    ESP_ERROR_CHECK(esp_event_loop_create_default());
+esp_err_t wifi_connection_init_stack(void) {
+    esp_err_t res = esp_netif_init();
+    if (res != ESP_OK) {
+        ESP_LOGE(TAG, "esp netif init failed");
+        return res;
+    }
+    res = esp_event_loop_create_default();
+    if (res != ESP_OK) {
+        ESP_LOGE(TAG, "esp event loop create failed");
+        return res;
+    }
     netif                  = esp_netif_create_default_wifi_sta();
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     cfg.nvs_enable         = false;  // Do not store WiFi credentials in NVS of ESP32-C6 radio
-    ESP_ERROR_CHECK(esp_wifi_init(&cfg));
-    ESP_ERROR_CHECK(esp_wifi_stop());
+    res                    = esp_wifi_init(&cfg);
+    if (res != ESP_OK) {
+        ESP_LOGE(TAG, "esp wifi init failed");
+        return res;
+    }
+    res = esp_wifi_stop();
+    if (res != ESP_OK) {
+        ESP_LOGE(TAG, "esp wifi stop failed");
+        return res;
+    }
 
     wifi_connection_init_internal();
+
+    return res;
 }
 
 // Connect to WiFi using the WiFi settings stored a specific settings slot
