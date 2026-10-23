@@ -10,6 +10,7 @@
 #include "esp_wifi.h"
 #include "esp_wifi_types_generic.h"
 #include "freertos/event_groups.h"
+#include "freertos/semphr.h"
 #include "freertos/task.h"
 #include "wifi_settings.h"
 
@@ -20,6 +21,7 @@ static const char* TAG = "WiFi connection";
 #define WIFI_STARTED_BIT   BIT2
 
 static EventGroupHandle_t wifiEventGroup = NULL;
+static SemaphoreHandle_t  connectMutex   = NULL;  // one wifi_connect_try_all at a time
 
 static uint8_t m_retry_count = 0;
 static uint8_t m_max_retries = 3;
@@ -86,6 +88,8 @@ static void wifi_connection_init_internal(void) {
     }
     wifiEventGroup = xEventGroupCreate();
     assert(wifiEventGroup);
+    connectMutex = xSemaphoreCreateMutex();
+    assert(connectMutex);
 
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, (void*)netif));
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, ESP_EVENT_ANY_ID, &event_handler, (void*)netif));
@@ -238,17 +242,31 @@ esp_netif_t* wifi_get_netif(void) {
     return netif;
 }
 
+// Connect to the first stored network that answers. Callers from several
+// tasks take turns: a second caller would otherwise restart the WiFi under
+// the first one's connection attempt, and both would fail. A caller that
+// waited finds the network the first one connected to, and is done.
 esp_err_t wifi_connect_try_all(void) {
-    for (uint8_t timeout = 0; timeout < 3; timeout++) {
+    wifi_connection_init_internal();
+    xSemaphoreTake(connectMutex, portMAX_DELAY);
+    esp_err_t res = ESP_FAIL;
+    if (wifi_connection_is_connected()) {
+        res = ESP_OK;
+    }
+    for (uint8_t timeout = 0; timeout < 3 && res != ESP_OK; timeout++) {
         for (uint16_t index = 0; index < WIFI_SETTINGS_MAX; index++) {
             if (wifi_connection_connect(index, 1) == ESP_OK) {
                 ESP_LOGI(TAG, "Connecting to network in slot %" PRIu32, index);
                 if (wifi_connection_await(1000)) {
-                    return ESP_OK;
+                    res = ESP_OK;
+                    break;
                 }
             }
         }
     }
-    ESP_LOGE(TAG, "Tried all stored networks, unable to connect");
-    return ESP_FAIL;
+    xSemaphoreGive(connectMutex);
+    if (res != ESP_OK) {
+        ESP_LOGE(TAG, "Tried all stored networks, unable to connect");
+    }
+    return res;
 }
